@@ -1,0 +1,93 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>localStorage: about:blank partitioning</title>
+<meta name=help href="https://privacycg.github.io/storage-partitioning/">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/webstorage/resources/partitioning-utils.js"></script>
+<style>iframe {display: none}</style>
+<body>
+<script>
+function getOrCreateID(key) {
+  if (!localStorage.getItem(key)) {
+    const newID = +new Date() + "-" + Math.random();
+    localStorage.setItem(key, newID);
+  }
+  return localStorage.getItem(key);
+}
+
+function addIframe(url) {
+  return new Promise(resolve => {
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.addEventListener("load", (e) => {
+      resolve(iframe);
+    }, {once: true});
+
+    document.body.appendChild(iframe);
+  });
+}
+
+promise_test(async t => {
+  localStorage.clear();
+
+  const path =
+    "webstorage/resources/localstorage-about-blank-partitioned-iframe.html";
+  const crossSiteURL = `http://{{hosts[alt][]}}:{{ports[http][0]}}/${path}`;
+  const sameSiteURL = `http://{{hosts[][]}}:{{ports[http][0]}}/${path}`;
+  let firstPartyID = getOrCreateID("userID3");
+  let crossSiteIframeID;
+  let sameSiteIframeID;
+  let crossSiteIframe;
+  let sameSiteIframe;
+  let crossSiteAboutBlankID;
+  let sameSiteAboutBlankID;
+
+  window.addEventListener("message", async e => {
+    const payload = {
+      command: "create about:blank iframe"
+    }
+
+    if (e.data.message === "iframe loaded") {
+      if (crossSiteURL.includes(e.origin)) {
+        // Step 2. cross-site iframe is loaded, capture reference to its ID
+        crossSiteIframeID = e.data.userID;
+        // Step 3. now, create a same-site iframe
+        sameSiteIframe = await addIframe(sameSiteURL);
+        // Step 4. Ask the cross-site iframe to create an about:blank iframe
+        crossSiteIframe.contentWindow.postMessage(payload, e.origin);
+      }
+
+      if (sameSiteURL.includes(e.origin)) {
+        // Step 5. same-site iframe is loaded, capture reference to its ID
+        sameSiteIframeID = e.data.userID;
+        // Step 6. Ask the same-site iframe to create an about:blank iframe
+        sameSiteIframe.contentWindow.postMessage(payload, e.origin);
+      }
+    }
+
+    if (e.data.message === "about:blank frame ID") {
+      // Step 7. capture reference to same-site iframe ID
+      if (crossSiteURL.includes(e.origin)) {
+        crossSiteAboutBlankID = e.data.userID;
+      }
+
+      // Step 8. capture reference to same-site iframe ID
+      if (sameSiteURL.includes(e.origin)) {
+        sameSiteAboutBlankID = e.data.userID;
+
+        // Step 9. Assert some things
+        assert_true(sameSiteIframeID !== undefined);
+        assert_true(crossSiteIframeID !== undefined);
+        assert_true(sameSiteIframeID === sameSiteAboutBlankID);
+        assert_true(crossSiteIframeID === crossSiteAboutBlankID);
+        assert_false(sameSiteAboutBlankID === crossSiteAboutBlankID);
+      }
+    }
+  });
+
+  // Step 1. Add a cross-site iframe
+  crossSiteIframe = await addIframe(crossSiteURL);
+}, "about:blank iframe opened from a 3P iframe not partitioned with 1P frame.");
+</script>
+</body>

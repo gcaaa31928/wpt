@@ -224,6 +224,7 @@ SET TIMEOUT: focus/support/iframe-contentwindow-focus-with-different-site-interm
 SET TIMEOUT: focus/support/iframe-contentwindow-focus-with-different-site-intermediate-frame-middle.sub.html
 SET TIMEOUT: focus/support/iframe-focuses-parent-different-site-inner.html
 SET TIMEOUT: focus/support/iframe-focuses-parent-same-site-inner.html
+SET TIMEOUT: webstorage/localstorage-about-blank-3P-window-partitioned.tentative.sub.html
 
 # generate_tests implementation and sample usage
 GENERATE_TESTS: resources/test/tests/functional/generate-callback.html

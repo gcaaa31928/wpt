@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>localStorage: about:blank partitioning</title>
+<meta name=help href="https://privacycg.github.io/storage-partitioning/">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/webstorage/resources/partitioning-utils.js"></script>
+<style>iframe {display: none}</style>
+<body>
+<script>
+async_test(t => {
+  localStorage.clear();
+
+  const id = getOrCreateID("userID2");
+  const iframe = document.createElement("iframe");
+  iframe.src = "about:blank";
+  iframe.addEventListener("load", t.step_func_done(e => {
+    const frameID = iframe.contentWindow.localStorage["userID2"];
+    assert_false(typeof id === "undefined", "id is not undefined");
+    assert_false(typeof frameID === "undefined", "id is not undefined");
+    assert_true(id === frameID);
+  }, {once: true}));
+  document.body.appendChild(iframe);
+
+  t.add_cleanup(() => {
+    iframe.remove();
+    localStorage.clear();
+  });
+}, "1P about:blank iframe shares StorageKey with 1P.");
+</script>
+</body>

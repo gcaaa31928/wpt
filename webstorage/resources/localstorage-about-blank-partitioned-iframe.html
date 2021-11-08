@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="./partitioning-utils.js"></script>
+<script>
+function getOrCreateID(key) {
+  if (!localStorage.getItem(key)) {
+    const newID = +new Date() + "-" + Math.random();
+    localStorage.setItem(key, newID);
+  }
+  return localStorage.getItem(key);
+}
+
+
+
+window.addEventListener("load", () => {
+  localStorage.clear();
+
+  const userID = getOrCreateID("userID3");
+  const payload = {
+    message: "iframe loaded",
+    userID,
+  }
+
+  window.top.postMessage(payload, "*");
+});
+
+window.addEventListener("message", async (e) => {
+  if (e.data.command == "create about:blank iframe") {
+    const iframe = await addIframe("about:blank");
+    const payload = {
+      message: "about:blank frame ID",
+      userID: iframe.contentWindow.localStorage["userID3"],
+    }
+
+    window.top.postMessage(payload, "*");
+  }
+});
+</script>
