@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>CSS Highlight API Test: Inheritance</title>
+<link rel="help" href="https://drafts.csswg.org/css-highlight-api-1/">
+<link rel="match" href="custom-highlight-painting-001-ref.html">
+<meta name="assert" value="Highlighted elements inherit style properties from their parent if they're not set">
+<style>
+  div::highlight(div-highlight) {
+    background-color: yellow;
+    color: red;
+  }
+  span::highlight(span-highlight) {
+    color: blue;
+  }
+</style>
+<body><div><span>One </span><span>two </span><span>three…</span></div>
+<script>
+  let r = new Range();
+  const div = document.querySelector("div");
+  r.setStart(div, 0);
+  r.setEnd(div, 2);
+
+  CSS.highlights.set("div-highlight", new Highlight(r));
+  CSS.highlights.set("span-highlight", new Highlight(r));
+</script>
